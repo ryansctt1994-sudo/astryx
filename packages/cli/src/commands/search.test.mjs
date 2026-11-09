@@ -10,7 +10,7 @@
  *      which only fire through a real Commander .parse() against argv.
  */
 
-import {describe, it, expect} from 'vitest';
+import {beforeAll, describe, it, expect} from 'vitest';
 import {spawnSync} from 'node:child_process';
 import * as path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -30,6 +30,14 @@ function runCli(args) {
   });
   return {status: res.status, stdout: res.stdout || '', stderr: res.stderr || ''};
 }
+
+// The first search() call pays a one-time cold load of every component doc
+// module (~3s on an idle machine), which a loaded full-suite run can push past
+// the 5s default test timeout. Pay it once here instead of in whichever test
+// happens to run first.
+beforeAll(async () => {
+  await search('button', OPTS);
+}, 30_000);
 
 describe('search() API — ranking', () => {
   it('ranks an exact component name match first', async () => {
